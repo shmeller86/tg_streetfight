@@ -1,0 +1,12 @@
+{
+    "proxy": {
+        "http": "http://login:password@address:port",
+        "https": "http://login:password@address:port"
+    },
+    "rpc": "https://polygon-rpc.com",
+    "contract": "0x000.... CONTRACT ADDRESS",
+    "bank_wallet_from": "0x000... WALLET",
+    "bank_private_key": "... PRIVATE KEY",
+    "url_addr": "https://polygonscan.com/tx/",
+    "bot_token": "TOKEN TELEGRAM BOT"
+}
