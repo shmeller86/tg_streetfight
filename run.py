@@ -1,13 +1,14 @@
-import logging
 import json
-import sqlite3
+import logging
 import secrets
+import sqlite3
 from coincurve import PublicKey
 from sha3 import keccak_256
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update, constants
 from telegram.ext import Application, CallbackQueryHandler, CommandHandler, ContextTypes
 from web3 import Web3
 from web3.logs import DISCARD
+
 
 con = sqlite3.connect('db.db')
 cur = con.cursor()
@@ -17,31 +18,25 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-keyboard = [
+k_1 = [
     [
-        InlineKeyboardButton("Play RSP", callback_data="play_rsp"),
+        InlineKeyboardButton("Play", callback_data="play_rsp"),
         InlineKeyboardButton("Balance", callback_data="get_balance"),
         InlineKeyboardButton("Deposit", callback_data="deposite"),
-    ],
-    [
-        InlineKeyboardButton("Make wallets", callback_data="gen_wal"),
-        InlineKeyboardButton("Help", callback_data="help"),
-        InlineKeyboardButton("Message me", callback_data="msg")
+        InlineKeyboardButton("Make wallets", callback_data="gen_wal")
     ]
 ]
-keyboard2 = [
+
+k_2 = [
     [
         InlineKeyboardButton("1", callback_data="1"),
         InlineKeyboardButton("5", callback_data="5"),
         InlineKeyboardButton("10", callback_data="10"),
-    ],
-    [
-        InlineKeyboardButton("15", callback_data="15"),
-        InlineKeyboardButton("30", callback_data="30"),
         InlineKeyboardButton("Return", callback_data="menu")
-    ]
+    ],
 ]
-keyboard3 = [
+
+k_3 = [
     [
         InlineKeyboardButton("🪨 Rock", callback_data="rock"),
         InlineKeyboardButton("✂️ Scissors", callback_data="scissors"),
@@ -51,15 +46,17 @@ keyboard3 = [
         InlineKeyboardButton("Return", callback_data="menu")
     ]
 ]
-keyboard4 = [
+
+k_4 = [
     [
         InlineKeyboardButton("Check winner", callback_data="reload")
     ]
 ]
-reply_markup = InlineKeyboardMarkup(keyboard)
-reply_markup_numbers = InlineKeyboardMarkup(keyboard2)
-reply_markup_play = InlineKeyboardMarkup(keyboard3)
-reply_markup_reload = InlineKeyboardMarkup(keyboard4)
+
+reply_markup_main = InlineKeyboardMarkup(k_1)
+reply_markup_numbers = InlineKeyboardMarkup(k_2)
+reply_markup_play = InlineKeyboardMarkup(k_3)
+reply_markup_reload = InlineKeyboardMarkup(k_4)
 
 with open('./config.json', 'r') as f:
     config = json.load(f)
@@ -74,10 +71,11 @@ url_addr = config['url_addr']
 BOT_TOKEN = config['bot_token']
 ERC20_ABI = json.loads('''[{"inputs": [],"stateMutability": "nonpayable","type": "constructor"},{"anonymous": false,"inputs": [{"indexed": true,"internalType": "address","name": "owner","type": "address"},{"indexed": true,"internalType": "address","name": "spender","type": "address"},{"indexed": false,"internalType": "uint256","name": "value","type": "uint256"}],"name": "Approval","type": "event"},{"anonymous": false,"inputs": [{"indexed": false,"internalType": "uint256","name": "number","type": "uint256"}],"name": "NumberPlay","type": "event"},{"anonymous": false,"inputs": [{"indexed": true,"internalType": "address","name": "from","type": "address"},{"indexed": true,"internalType": "address","name": "to","type": "address"},{"indexed": false,"internalType": "uint256","name": "value","type": "uint256"}],"name": "Transfer","type": "event"},{"inputs": [{"internalType": "address","name": "owner","type": "address"},{"internalType": "address","name": "spender","type": "address"}],"name": "allowance","outputs": [{"internalType": "uint256","name": "","type": "uint256"}],"stateMutability": "view","type": "function"},{"inputs": [{"internalType": "address","name": "spender","type": "address"},{"internalType": "uint256","name": "amount","type": "uint256"}],"name": "approve","outputs": [{"internalType": "bool","name": "","type": "bool"}],"stateMutability": "nonpayable","type": "function"},{"inputs": [{"internalType": "address","name": "account","type": "address"}],"name": "balanceOf","outputs": [{"internalType": "uint256","name": "","type": "uint256"}],"stateMutability": "view","type": "function"},{"inputs": [],"name": "decimals","outputs": [{"internalType": "uint8","name": "","type": "uint8"}],"stateMutability": "view","type": "function"},{"inputs": [{"internalType": "address","name": "spender","type": "address"},{"internalType": "uint256","name": "subtractedValue","type": "uint256"}],"name": "decreaseAllowance","outputs": [{"internalType": "bool","name": "","type": "bool"}],"stateMutability": "nonpayable","type": "function"},{"inputs": [],"name": "gameCost","outputs": [{"internalType": "uint256","name": "","type": "uint256"}],"stateMutability": "view","type": "function"},{"inputs": [{"internalType": "uint256","name": "id","type": "uint256"}],"name": "gameHistory","outputs": [{"components": [{"internalType": "address","name": "player_1","type": "address"},{"internalType": "address","name": "player_2","type": "address"},{"internalType": "int8","name": "player_1_action","type": "int8"},{"internalType": "int8","name": "player_2_action","type": "int8"},{"internalType": "int8","name": "player_win","type": "int8"}],"internalType": "struct RSP._game[]","name": "","type": "tuple[]"}],"stateMutability": "view","type": "function"},{"inputs": [],"name": "gameId","outputs": [{"internalType": "uint256","name": "","type": "uint256"}],"stateMutability": "view","type": "function"},{"inputs": [{"internalType": "address","name": "spender","type": "address"},{"internalType": "uint256","name": "addedValue","type": "uint256"}],"name": "increaseAllowance","outputs": [{"internalType": "bool","name": "","type": "bool"}],"stateMutability": "nonpayable","type": "function"},{"inputs": [],"name": "jackPot","outputs": [{"internalType": "uint256","name": "","type": "uint256"}],"stateMutability": "view","type": "function"},{"inputs": [],"name": "name","outputs": [{"internalType": "string","name": "","type": "string"}],"stateMutability": "view","type": "function"},{"inputs": [],"name": "players","outputs": [{"internalType": "address payable[]","name": "","type": "address[]"}],"stateMutability": "view","type": "function"},{"inputs": [{"internalType": "uint256","name": "_modulus","type": "uint256"}],"name": "randMod","outputs": [{"internalType": "uint256","name": "","type": "uint256"}],"stateMutability": "view","type": "function"},{"inputs": [{"internalType": "uint256","name": "cost","type": "uint256"}],"name": "setGameCost","outputs": [{"internalType": "bool","name": "","type": "bool"}],"stateMutability": "nonpayable","type": "function"},{"inputs": [],"name": "symbol","outputs": [{"internalType": "string","name": "","type": "string"}],"stateMutability": "view","type": "function"},{"inputs": [],"name": "totalSupply","outputs": [{"internalType": "uint256","name": "","type": "uint256"}],"stateMutability": "view","type": "function"},{"inputs": [{"internalType": "address","name": "to","type": "address"},{"internalType": "uint256","name": "amount","type": "uint256"}],"name": "transfer","outputs": [{"internalType": "bool","name": "","type": "bool"}],"stateMutability": "nonpayable","type": "function"},{"inputs": [{"internalType": "address","name": "from","type": "address"},{"internalType": "address","name": "to","type": "address"},{"internalType": "uint256","name": "amount","type": "uint256"}],"name": "transferFrom","outputs": [{"internalType": "bool","name": "","type": "bool"}],"stateMutability": "nonpayable","type": "function"},{"inputs": [{"internalType": "uint256","name": "amount","type": "uint256"},{"internalType": "int8","name": "action","type": "int8"}],"name": "transferPerGame","outputs": [{"internalType": "uint256","name": "","type": "uint256"}],"stateMutability": "nonpayable","type": "function"}]''')
 
-
 w3 = Web3(Web3.HTTPProvider(RPC,request_kwargs={"proxies":proxies}))
 coin = w3.eth.contract(contract, abi=ERC20_ABI)
 gasLimit = 210000
+
+
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     try:
@@ -88,7 +86,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         row = cur.execute("SELECT * FROM users WHERE id_tg = '%s'" % user_id).fetchone()
         if row:
             await update.message.reply_text(f"You are already registered!", parse_mode=constants.ParseMode.HTML)
-            await update.message.reply_text("Please choose:", reply_markup=reply_markup)
+            await update.message.reply_text("Please choose:", reply_markup=reply_markup_main)
             return False
         private_key = keccak_256(secrets.token_bytes(32)).digest()
         public_key = PublicKey.from_valid_secret(private_key).format(compressed=False)[1:]
@@ -131,7 +129,7 @@ MATIC transaction hash: <a href='{url_addr}{native_hash}'>{native_hash}</a>",
         parse_mode=constants.ParseMode.HTML, disable_web_page_preview=True)
         cur.execute(f"INSERT INTO users (first_name, last_name, user_name, id_tg, address, private_key, balance, win, lose, dt_create) VALUES ('{first_name}','{last_name}','{user_name}','{user_id}' ,'{new_address}', '{private_key.hex()}', 10, 0,0,'2022-05-19');")
         con.commit()
-        await update.message.reply_text("Please choose:", reply_markup=reply_markup)
+        await update.message.reply_text("Please choose:", reply_markup=reply_markup_main)
     except Exception as e:
         print(e)
         await update.message.reply_text("Something wrong... Try again command /start")
@@ -150,7 +148,7 @@ async def button(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
                 await query.edit_message_text(f"The game costs {str(cost_play)} RSP tokens, if you win, you will take {str(reward)} RSP tokens", reply_markup=reply_markup_play)
                 return None
             else:
-                await query.edit_message_text(f"Sorry, but need more RSP tokens", reply_markup=reply_markup)
+                await query.edit_message_text(f"Sorry, but need more RSP tokens", reply_markup=reply_markup_main)
                 return None
     elif query.data == "get_balance":
         row = cur.execute("SELECT * FROM users WHERE id_tg = '%s'" % user_id).fetchone()
@@ -181,16 +179,12 @@ async def button(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
             cur.execute(f"UPDATE users SET balance={new_balance} where id={row[0]};")
             con.commit()
         await query.answer()
-        await query.message.reply_text("Please choose:", reply_markup=reply_markup)
+        await query.message.reply_text("Please choose:", reply_markup=reply_markup_main)
         return True
     elif query.data == "gen_wal":
         await query.answer()
         await query.edit_message_text("How many?:", reply_markup=reply_markup_numbers)
         return None
-    elif query.data == "help":
-        msg = ""
-    elif query.data == "msg":
-        msg = ""
     elif query.data == "menu":
         msg=''
     elif query.data == "rock":
@@ -314,18 +308,14 @@ async def button(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     await query.answer()
     if msg:
         await query.edit_message_text(text=msg, parse_mode=constants.ParseMode.HTML)
-        await query.message.reply_text("Please choose:", reply_markup=reply_markup)
+        await query.message.reply_text("Please choose:", reply_markup=reply_markup_main)
     else:
-        await query.edit_message_text("Please choose:", reply_markup=reply_markup)
-
-async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    await update.message.reply_text("Use /start to test this bot.")
+        await query.edit_message_text("Please choose:", reply_markup=reply_markup_main)
 
 def main() -> None:
     application = Application.builder().token(BOT_TOKEN).build()
     application.add_handler(CommandHandler("start", start))
     application.add_handler(CallbackQueryHandler(button))
-    application.add_handler(CommandHandler("help", help_command))
     application.run_polling()
 
 if __name__ == "__main__":
